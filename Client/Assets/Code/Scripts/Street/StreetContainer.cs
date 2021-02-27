@@ -62,7 +62,6 @@ namespace ScotlandYard.Scripts.Street
             if (this.Instance is StreetPath street)
             {
                 street.Width = width;
-                street.waypointColor = this.waypointColor;
             }
         }
 
@@ -96,38 +95,104 @@ namespace ScotlandYard.Scripts.Street
 
                 for (int i = 0; i < childCount; i++)
                 {
-                    if (i == 0)
-                    {
-                        Gizmos.color = Color.white;
-                        Gizmos.DrawLine(startPoint.transform.position, GetWaypoint(i).position);
-                        Gizmos.color = new Color32(200, 0, 0, 170);
-                        Gizmos.DrawCube(startPoint.transform.position, Vector3.one * 0.5f);
-                    }
-                    else if (i == childCount - 1)
-                    {
-                        Gizmos.color = Color.white;
-                        Gizmos.DrawLine(GetWaypoint(i).position, endPoint.transform.position);
-                        Gizmos.color = new Color32(200, 0, 0, 170);
-                        Gizmos.DrawCube(endPoint.transform.position, Vector3.one * 0.5f);
-                    }
-
                     Transform wp = GetWaypoint(i);
+
                     if (wp != null)
                     {
+                        Vector3 vectorRed = wp.position + (wp.right * width * 0.5f);
+                        Vector3 vectorGreen = wp.position - (wp.right * width * 0.5f);
+
+                        #region Draw Start- and EndPoint
+                        if (i == 0)
+                        {
+                            Gizmos.color = Color.white;
+                            Gizmos.DrawLine(startPoint.transform.position, wp.position);
+
+                            Gizmos.color = Color.red;
+                            Gizmos.DrawLine(vectorRed, GetVerticiesOfPoint(startPoint.GetComponent<StreetPoint>())[0]);
+                            Gizmos.color = Color.green;
+                            Gizmos.DrawLine(vectorGreen, GetVerticiesOfPoint(startPoint.GetComponent<StreetPoint>())[1]);
+
+                            Gizmos.color = new Color32(200, 0, 0, 170);
+                            Gizmos.DrawCube(startPoint.transform.position, Vector3.one * 0.5f);
+                        }
+                        else if (i == childCount - 1)
+                        {
+                            Gizmos.color = Color.white;
+                            Gizmos.DrawLine(GetWaypoint(i).position, endPoint.transform.position);
+
+                            Gizmos.color = Color.red;
+                            Gizmos.DrawLine(vectorRed, GetVerticiesOfPoint(endPoint.GetComponent<StreetPoint>())[0]);
+                            Gizmos.color = Color.green;
+                            Gizmos.DrawLine(vectorGreen, GetVerticiesOfPoint(endPoint.GetComponent<StreetPoint>())[1]);
+
+                            Gizmos.color = new Color32(200, 0, 0, 170);
+                            Gizmos.DrawCube(endPoint.transform.position, Vector3.one * 0.5f);
+                        }
+                        #endregion
+
                         if (i < childCount - 1 && GetWaypoint(i + 1) is Transform posB)
                         {
                             Gizmos.color = Color.white;
                             Gizmos.DrawLine(wp.position, posB.position);
+
+                            Gizmos.color = Color.red;
+                            Gizmos.DrawLine(vectorRed, posB.position + (posB.right * width * 0.5f));
+                            Gizmos.color = Color.green;
+                            Gizmos.DrawLine(vectorGreen, posB.position - (posB.right * width * 0.5f));
                         }
                         Gizmos.color = Color.black;
-                        Gizmos.DrawLine(wp.position + (wp.right * width * 0.5f), wp.position - (wp.right * width * 0.5f));
+                        Gizmos.DrawLine(vectorRed, vectorGreen);
+
+                        Gizmos.color = Color.red;
+                        Gizmos.DrawSphere(vectorRed, 0.1f);
+                        Gizmos.color = Color.green;
+                        Gizmos.DrawSphere(vectorGreen, 0.1f);
 
                         Gizmos.color = waypointColor;
                         Gizmos.DrawSphere(wp.position, 0.2f);
                     }
-
                 }
+
+                Vector3[] vectors = GetVerticiesOfPoint(startPoint.GetComponent<StreetPoint>());
+
+                Gizmos.color = Color.red;
+                Gizmos.DrawSphere(vectors[0], 0.1f);
+                Gizmos.color = Color.green;
+                Gizmos.DrawSphere(vectors[1], 0.1f);
+
+                vectors = GetVerticiesOfPoint(endPoint.GetComponent<StreetPoint>());
+
+                Gizmos.color = Color.red;
+                Gizmos.DrawSphere(vectors[0], 0.1f);
+                Gizmos.color = Color.green;
+                Gizmos.DrawSphere(vectors[1], 0.1f);
             }
+        }
+
+        protected virtual Vector3[] GetVerticiesOfPoint(StreetPoint streetPoint)
+        {
+            Vector3[] verticies = new Vector3[2];
+
+            float radius = streetPoint?.Radius ?? 1f;
+            Transform wp = streetPoint.Equals(startPoint) ? GetWaypoint(0) : GetWaypoint(this.transform.childCount-1);
+            var pointAngle = streetPoint.transform.eulerAngles.y;
+            float upperAngle = (wp.eulerAngles.y - pointAngle) * Mathf.PI / 180;
+            float lowerAngle = (wp.eulerAngles.y + 180 - pointAngle) * Mathf.PI / 180;
+
+            if ((streetPoint.transform.position.x < wp.position.x && streetPoint.transform.position.z < wp.position.z)
+                || (streetPoint.transform.position.x > wp.position.x && streetPoint.transform.position.z > wp.position.z))
+            {
+                verticies[0] = streetPoint.transform.position + new Vector3(radius * Mathf.Cos(upperAngle), 0, radius * Mathf.Sin(upperAngle));
+                verticies[1] = streetPoint.transform.position + new Vector3(radius * Mathf.Cos(lowerAngle), 0, radius * Mathf.Sin(lowerAngle));
+            }
+            else
+            {
+                verticies[0] = streetPoint.transform.position + new Vector3(radius* Mathf.Cos(lowerAngle), 0, radius* Mathf.Sin(lowerAngle));
+                verticies[1] = streetPoint.transform.position + new Vector3(radius* Mathf.Cos(upperAngle), 0, radius* Mathf.Sin(upperAngle));
+            }
+
+            return verticies;
         }
 #endif
     }

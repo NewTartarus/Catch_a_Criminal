@@ -12,6 +12,7 @@ namespace ScotlandYard.Scripts.Street
     {
         [SerializeField] protected List<StreetContainer> streetList;
         [SerializeField] protected List<StreetPoint> streetPoints;
+        [SerializeField] protected Material streetMaterial;
 
         public void Init()
         {
@@ -20,6 +21,16 @@ namespace ScotlandYard.Scripts.Street
             {
                 container.Instance.StartPoint.GetComponent<StreetPoint>()?.AddStreet(container.Instance);
                 container.Instance.EndPoint.GetComponent<StreetPoint>()?.AddStreet(container.Instance);
+
+                if(container.Instance is StreetPath path)
+                {
+                    path.Init(this.streetMaterial);
+                }
+            }
+
+            foreach(StreetPoint point in streetPoints)
+            {
+                point.Init(this.streetMaterial);
             }
         }
 
